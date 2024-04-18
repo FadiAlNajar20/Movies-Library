@@ -5,6 +5,8 @@
 ## WRRC
 **Image of WRRC** :
 !["WRRC"](./image/Capture.PNG)
+**Image of WRRC for API** :
+!["WRRC"](./image/api.png)
 
 ## Overview
 When the client does a search in the browser, like when they want to search for an image, they press 'Enter', and the browser sends this HTTP request to the server, containing the value. The server will take this request and handle it within the whole database. Once the server retrieves the image from the database, it sends an HTTP response back that contains the image, rendering this image in the browser and displaying it to the client.
