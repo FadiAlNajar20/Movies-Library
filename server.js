@@ -26,8 +26,8 @@ app.get("*", (req, res) => {
 app.use(errorHandler);
 
 function handelTop(req, res) {
-    const top = `https://api.themoviedb.org/3/movie/top_rated?api_key=${apiKey}`
-    axios.get(top)
+    const topMovie = `https://api.themoviedb.org/3/movie/top_rated?api_key=${apiKey}`;
+    axios.get(topMovie)
         .then((response) => {
             let popularMovie = response.data.results.map((item) => {
                 console.log(item);
@@ -44,7 +44,7 @@ function handelHome(erq, res) {
 }
 
 function handelFavorite(req, res) {
-    const url = `https://api.themoviedb.org/3/account/19719723/favorite/movies?language=en-US&page=1&sort_by=created_at.asc&api_key=${apiKey}`
+    const url = `https://api.themoviedb.org/3/account/19719723/favorite/movies?language=en-US&page=1&sort_by=created_at.asc&api_key=${apiKey}`;
     res.status(200).send('Welcome to Favorite Page');
 }
 
