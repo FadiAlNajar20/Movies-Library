@@ -5,8 +5,13 @@ const getData = require('./MovieData/data.json');
 const { default: axios } = require('axios');
 require('dotenv').config();
 const apiKey = process.env.API_KEY;
+const pgUrl = process.env.PG_URL;
+
 const app = express();
+const { Client } = require('pg');
+const client = new Client(pgUrl);
 const port = 5000;
+app.use(express.json());
 
 app.get('/', handelHome);
 app.get("/favorite", handelFavorite);
@@ -15,22 +20,39 @@ app.get("/search", handelSearch);
 // Two more routes
 app.get("/popular", handelPopular);
 app.get("/top", handelTop);
-app.get("*", (req, res) => {
-    const pageNotFound = {
-        status: 404,
-        responseText: "page not found error",
-    };
-    res.status(404).send(pageNotFound);
-});
-
+//CRUD Routs
+app.post("/addMovie", handleAddMovie);
+app.get("/getMovies", handleGetMovies);
+//Handle Error
+app.use(errorHandlerPage);
 app.use(errorHandler);
+
+function handleAddMovie(req, res) {
+    console.log(req.body);
+    let { title, release_date, poster_path, overview } = req.body;
+    let sql = 'INSERT INTO movies(title, release_date, poster_path, overview) VALUES($1, $2, $3, $4) RETURNING *;'
+    let values = [title, release_date, poster_path, overview];
+    client.query(sql, values).then((result) => {
+        return res.status(201).json(result.rows[0]);
+    }).catch((error) => {
+        errorHandler(error, req, res);
+    });
+}
+
+function handleGetMovies(req, res) {
+    let sql = 'SELECT * FROM movies;'
+    client.query(sql).then((result) => {
+        return res.status(200).json(result.rows);
+    }).catch((error) => {
+        errorHandler(error, req, res);
+    })
+}
 
 function handelTop(req, res) {
     const topMovie = `https://api.themoviedb.org/3/movie/top_rated?api_key=${apiKey}`;
     axios.get(topMovie)
         .then((response) => {
             let popularMovie = response.data.results.map((item) => {
-                console.log(item);
                 return new Movie(item.id, item.title, item.release_date, item.poster_path, item.overview);
             })
             res.json(popularMovie);
@@ -38,6 +60,7 @@ function handelTop(req, res) {
             errorHandler(error, req, res);
         })
 }
+
 function handelHome(erq, res) {
     let newMovie = new Movie(getData.title, getData.poster_path, getData.overview);
     res.status(200).json(newMovie);
@@ -100,14 +123,16 @@ function Movie(id, title, release_date, poster_path, overview) {
     this.overview = overview;
 }
 
-function errorHandler(error, erq, res) {
-    const err = {
-        status: 500,
-        message: "Sorry, something went wrong",
-    };
-    res.status(500).send(err);
+function errorHandlerPage(req, res) {
+    res.status(404).send('Page nof found');
 }
 
-app.listen(port, () => {
-    console.log(`The server start at port ${port}`);
+function errorHandler(error, erq, res) {
+    res.status(500).send(error);
+}
+
+client.connect().then(() => {
+    app.listen(port, () => {
+        console.log(`The server start at port ${port}`);
+    });
 });
