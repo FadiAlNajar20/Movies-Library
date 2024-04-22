@@ -23,9 +23,44 @@ app.get("/top", handelTop);
 //CRUD Routs
 app.post("/addMovie", handleAddMovie);
 app.get("/getMovies", handleGetMovies);
+app.delete("/DELETE/:id", handleDelete);
+app.put("/UPDATE/:id", handleUpdate);
+app.get("/getMovie/:id", handleGetMovieID)
 //Handle Error
 app.use(errorHandlerPage);
 app.use(errorHandler);
+
+function handleGetMovieID (req, res){
+    let id = req.params.id;
+    let sql = `SELECT * FROM movies WHERE id=${id};`
+    client.query(sql).then((result)=>{
+        return res.json(result.rows);
+    }).catch((error) => {
+        errorHandler(error, req, res);
+    });
+
+}
+function handleDelete(req, res) {
+    let id = req.params.id;
+    let sql = `DELETE FROM movies WHERE id=${id} RETURNING *;`;
+    client.query(sql).then((result)=>{
+        console.log(result);
+        return res.json(result.rows[0]);
+    }).catch((error) => {
+        errorHandler(error, req, res);
+    });
+}
+
+function handleUpdate(req, res) {
+    let id = req.params.id;
+    let {title, release_date, poster_path, overview} = req.body;
+    let sql = `UPDATE movies SET title='${title}', release_date='${release_date}', poster_path='${poster_path}', overview='${overview}' WHERE id=${id} RETURNING *;`
+    client.query(sql).then((result)=> {
+        return res.json(result.rows[0]);
+    }).catch((error) => {
+        errorHandler(error, req, res);
+    });
+}
 
 function handleAddMovie(req, res) {
     console.log(req.body);
