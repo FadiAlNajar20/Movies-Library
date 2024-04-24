@@ -4,7 +4,7 @@
 
 ## WRRC
 **Image of WRRC** :
-!["WRRC"](image\wrrc.webp)
+!["WRRC"](./image/wrrc.webp)
 
 ## Overview
 In today's lab, I created a database, added data to it, and retrieved data from it.
