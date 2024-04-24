@@ -25,7 +25,7 @@ app.post("/addMovie", handleAddMovie);
 app.get("/getMovies", handleGetMovies);
 app.delete("/DELETE/:id", handleDelete);
 app.put("/UPDATE/:id", handleUpdate);
-app.get("/getMovie/:id", handleGetMovieID)
+app.get("/getMovie/:id", handleGetMovieID);
 //Handle Error
 app.use(errorHandlerPage);
 app.use(errorHandler);
