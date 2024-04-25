@@ -1,100 +1,38 @@
 'use strict';
 
-const express = require('express');
-const getData = require('./MovieData/data.json');
-const { default: axios } = require('axios');
 require('dotenv').config();
+const getData = require('./MovieData/data.json');
+const express = require('express');
+const { default: axios } = require('axios');
+
 const apiKey = process.env.API_KEY;
 const pgUrl = process.env.PG_URL;
+const PORT = process.env.PORT || 5000;
 
 const app = express();
 const { Client } = require('pg');
 const client = new Client(pgUrl);
-const port = 5000;
 app.use(express.json());
 
+// Routs for the API 
 app.get('/', handelHome);
 app.get("/favorite", handelFavorite);
 app.get("/trending", handelTrending);
 app.get("/search", handelSearch);
-// Two more routes
 app.get("/popular", handelPopular);
 app.get("/top", handelTop);
-//CRUD Routs
+
+//CRUD Routs for DB
 app.post("/addMovie", handleAddMovie);
 app.get("/getMovies", handleGetMovies);
 app.delete("/DELETE/:id", handleDelete);
 app.put("/UPDATE/:id", handleUpdate);
 app.get("/getMovie/:id", handleGetMovieID);
-//Handle Error
+
+//Handle Error and middleware
 app.use(errorHandlerPage);
 app.use(errorHandler);
 
-function handleGetMovieID (req, res){
-    let id = req.params.id;
-    let sql = `SELECT * FROM movies WHERE id=${id};`
-    client.query(sql).then((result)=>{
-        return res.json(result.rows);
-    }).catch((error) => {
-        errorHandler(error, req, res);
-    });
-
-}
-function handleDelete(req, res) {
-    let id = req.params.id;
-    let sql = `DELETE FROM movies WHERE id=${id} RETURNING *;`;
-    client.query(sql).then((result)=>{
-        console.log(result);
-        return res.json(result.rows[0]);
-    }).catch((error) => {
-        errorHandler(error, req, res);
-    });
-}
-
-function handleUpdate(req, res) {
-    let id = req.params.id;
-    let {title, release_date, poster_path, overview} = req.body;
-    let sql = `UPDATE movies SET title='${title}', release_date='${release_date}', poster_path='${poster_path}', overview='${overview}' WHERE id=${id} RETURNING *;`
-    client.query(sql).then((result)=> {
-        return res.json(result.rows[0]);
-    }).catch((error) => {
-        errorHandler(error, req, res);
-    });
-}
-
-function handleAddMovie(req, res) {
-    console.log(req.body);
-    let { title, release_date, poster_path, overview } = req.body;
-    let sql = 'INSERT INTO movies(title, release_date, poster_path, overview) VALUES($1, $2, $3, $4) RETURNING *;'
-    let values = [title, release_date, poster_path, overview];
-    client.query(sql, values).then((result) => {
-        return res.status(201).json(result.rows[0]);
-    }).catch((error) => {
-        errorHandler(error, req, res);
-    });
-}
-
-function handleGetMovies(req, res) {
-    let sql = 'SELECT * FROM movies;'
-    client.query(sql).then((result) => {
-        return res.status(200).json(result.rows);
-    }).catch((error) => {
-        errorHandler(error, req, res);
-    })
-}
-
-function handelTop(req, res) {
-    const topMovie = `https://api.themoviedb.org/3/movie/top_rated?api_key=${apiKey}`;
-    axios.get(topMovie)
-        .then((response) => {
-            let popularMovie = response.data.results.map((item) => {
-                return new Movie(item.id, item.title, item.release_date, item.poster_path, item.overview);
-            })
-            res.json(popularMovie);
-        }).catch((error) => {
-            errorHandler(error, req, res);
-        })
-}
 
 function handelHome(erq, res) {
     let newMovie = new Movie(getData.title, getData.poster_path, getData.overview);
@@ -102,7 +40,6 @@ function handelHome(erq, res) {
 }
 
 function handelFavorite(req, res) {
-    const url = `https://api.themoviedb.org/3/account/19719723/favorite/movies?language=en-US&page=1&sort_by=created_at.asc&api_key=${apiKey}`;
     res.status(200).send('Welcome to Favorite Page');
 }
 
@@ -150,6 +87,72 @@ function handelPopular(req, res) {
         })
 }
 
+function handelTop(req, res) {
+    const topMovie = `https://api.themoviedb.org/3/movie/top_rated?api_key=${apiKey}`;
+    axios.get(topMovie)
+        .then((response) => {
+            let popularMovie = response.data.results.map((item) => {
+                return new Movie(item.id, item.title, item.release_date, item.poster_path, item.overview);
+            })
+            res.json(popularMovie);
+        }).catch((error) => {
+            errorHandler(error, req, res);
+        })
+}
+
+function handleAddMovie(req, res) {
+    console.log(req.body);
+    let { title, release_date, poster_path, overview } = req.body;
+    let sql = 'INSERT INTO movies(title, release_date, poster_path, overview) VALUES($1, $2, $3, $4) RETURNING *;'
+    let values = [title, release_date, poster_path, overview];
+    client.query(sql, values).then((result) => {
+        return res.status(201).json(result.rows[0]);
+    }).catch((error) => {
+        errorHandler(error, req, res);
+    });
+}
+
+function handleGetMovies(req, res) {
+    let sql = 'SELECT * FROM movies;'
+    client.query(sql).then((result) => {
+        return res.status(200).json(result.rows);
+    }).catch((error) => {
+        errorHandler(error, req, res);
+    })
+}
+
+function handleDelete(req, res) {
+    let id = req.params.id;
+    let sql = `DELETE FROM movies WHERE id=${id};`;
+    client.query(sql).then((result) => {
+        console.log(result);
+        return res.json(result.rows[0]);
+    }).catch((error) => {
+        errorHandler(error, req, res);
+    });
+}
+
+function handleUpdate(req, res) {
+    let id = req.params.id;
+    let { title, release_date, poster_path, overview } = req.body;
+    let sql = `UPDATE movies SET title='${title}', release_date='${release_date}', poster_path='${poster_path}', overview='${overview}' WHERE id=${id} RETURNING *;`
+    client.query(sql).then((result) => {
+        return res.json(result.rows[0]);
+    }).catch((error) => {
+        errorHandler(error, req, res);
+    });
+}
+
+function handleGetMovieID(req, res) {
+    let id = req.params.id;
+    let sql = `SELECT * FROM movies WHERE id=${id};`
+    client.query(sql).then((result) => {
+        return res.json(result.rows);
+    }).catch((error) => {
+        errorHandler(error, req, res);
+    });
+}
+
 function Movie(id, title, release_date, poster_path, overview) {
     this.id = id;
     this.title = title;
@@ -167,7 +170,7 @@ function errorHandler(error, erq, res) {
 }
 
 client.connect().then(() => {
-    app.listen(port, () => {
-        console.log(`The server start at port ${port}`);
+    app.listen(PORT, () => {
+        console.log(`The server start at port ${PORT}`);
     });
 });
