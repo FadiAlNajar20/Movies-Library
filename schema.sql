@@ -3,5 +3,6 @@ CREATE TABLE movies(
     title varchar(255),
     release_date varchar(255),
     poster_path varchar(255),
-    overview varchar(255)
+    overview TEXT,
+    comment varchar(255)
 );

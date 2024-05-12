@@ -4,14 +4,16 @@ require('dotenv').config();
 const getData = require('./MovieData/data.json');
 const express = require('express');
 const { default: axios } = require('axios');
+const cors = require("cors");
 
 const apiKey = process.env.API_KEY;
 const pgUrl = process.env.PG_URL;
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3001;
 
 const app = express();
 const { Client } = require('pg');
 const client = new Client(pgUrl);
+app.use(cors());
 app.use(express.json());
 
 // Routs for the API 
@@ -24,7 +26,7 @@ app.get("/top", handelTop);
 
 //CRUD Routs for DB
 app.post("/addMovie", handleAddMovie);
-app.get("/getMovies", handleGetMovies);
+app.get("/getAllMovie", handleGetMovies);
 app.delete("/DELETE/:id", handleDelete);
 app.put("/UPDATE/:id", handleUpdate);
 app.get("/getMovie/:id", handleGetMovieID);
@@ -48,7 +50,8 @@ function handelTrending(req, res) {
     axios.get(url)
         .then(response => {
             let data = response.data.results.map((element) => {
-                let newMovie = new Movie(element.id, element.name, element.first_air_date, element.poster_path, element.overview);
+                console.log(element);
+                let newMovie = new Movie(element.id, element.title || element.original_title || element.original_name, element.release_date || element.first_air_date, element.poster_path, element.overview);
                 return newMovie;
             });
             res.status(200).json(data);
@@ -102,9 +105,9 @@ function handelTop(req, res) {
 
 function handleAddMovie(req, res) {
     console.log(req.body);
-    let { title, release_date, poster_path, overview } = req.body;
-    let sql = 'INSERT INTO movies(title, release_date, poster_path, overview) VALUES($1, $2, $3, $4) RETURNING *;'
-    let values = [title, release_date, poster_path, overview];
+    let { title, release_date, poster_path, overview, comment } = req.body;
+    let sql = "INSERT INTO movies(title, release_date, poster_path, overview, comment) VALUES($1, $2, $3, $4, $5) RETURNING *;"
+    let values = [title, release_date, poster_path, overview, comment];
     client.query(sql, values).then((result) => {
         return res.status(201).json(result.rows[0]);
     }).catch((error) => {
@@ -134,8 +137,9 @@ function handleDelete(req, res) {
 
 function handleUpdate(req, res) {
     let id = req.params.id;
-    let { title, release_date, poster_path, overview } = req.body;
-    let sql = `UPDATE movies SET title='${title}', release_date='${release_date}', poster_path='${poster_path}', overview='${overview}' WHERE id=${id} RETURNING *;`
+    let { title, release_date, poster_path, overview, comment } = req.body;
+    let sql = `UPDATE movies SET title=$1, release_date=$2, poster_path=$3, overview=$4 comment=$5 WHERE id=${id} RETURNING *;`
+    const values = [title, release_date, poster_path, overview, comment]
     client.query(sql).then((result) => {
         return res.json(result.rows[0]);
     }).catch((error) => {
