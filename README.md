@@ -4,7 +4,7 @@
 
 ## WRRC
 **Image of WRRC** :
-!["WRRC"](./image/routs.webp)
+!["WRRC"](./image/routs.png)
 
 ## Overview
 In today's lab, I Add more Routes.
