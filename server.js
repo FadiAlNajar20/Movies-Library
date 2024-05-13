@@ -137,11 +137,13 @@ function handleDelete(req, res) {
 
 function handleUpdate(req, res) {
     let id = req.params.id;
-    let { title, release_date, poster_path, overview, comment } = req.body;
-    let sql = `UPDATE movies SET title=$1, release_date=$2, poster_path=$3, overview=$4, comment=$5 WHERE id=${id} RETURNING *;`
-    const values = [title, release_date, poster_path, overview, comment];
-    client.query(sql, values).then((result) => {
+    let { comment } = req.body;
+    let sql = `UPDATE movies SET comment=$1 WHERE id=$2 RETURNING *;`;
+    const params = [comment, id];
+    client.query(sql, params).then((result) => {
+        
         return res.json(result.rows[0]);
+
     }).catch((error) => {
         errorHandler(error, req, res);
     });
